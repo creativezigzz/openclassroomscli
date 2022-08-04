@@ -8,15 +8,15 @@ def print_hi(name):
 
 if __name__ == '__main__':
     driver = webdriver.Chrome()
-    driver.get("http://www.python.org")
-    assert "Python" in driver.title
-    elem = driver.find_element(By.NAME, "q")
+    driver.get("http://www.amazon.fr")
+    assert "Amazon" in driver.title
+    elem = driver.find_element(By.NAME, "field-keywords")  # We select the schearch bar
     elem.clear()
-    elem.send_keys("pycon")
+    elem.send_keys("vélo")
     elem.send_keys(Keys.RETURN)
     assert "No results found." not in driver.page_source
+    #If there is some results so we
     driver.close()
 
-    parser = argparse.ArgumentParser(description="Visit openclassroom and look for something")
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
