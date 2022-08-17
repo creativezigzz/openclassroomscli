@@ -70,12 +70,14 @@ def get_googlemaps(client):
 
 def find_to_db(db_user, db_password, client_name, db_name="test"):
     try:
+        # Connection a la db sur mon pc
         cnx = mc.connect(user=db_user,
                          password=db_password,
                          host='127.0.0.1',
                          database=db_name)
+        # Crée un curseur pour executer la query
         cursor = cnx.cursor()
-
+        # On prend ce qui nous interresse
         fields = "NCLI, NOM, ADRESSE, LOCALITE"
         table = "client"
         conditions = "NOM = %s"
@@ -146,4 +148,4 @@ if __name__ == '__main__':
     client_unique = many_client(result)
     # now open a window with selenium and search for Google Maps
     get_googlemaps(client_unique)
-    print("You can find the itinirery in this folder")
+    print("You can find the itinerary in this folder")
