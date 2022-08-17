@@ -1,3 +1,6 @@
+import mysql.connector as mc
+from mysql.connector import errorcode
+import argparse
 import pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -6,64 +9,73 @@ from selenium.webdriver.common.by import By
 import time
 
 
-def test_books(name):
-    driver = webdriver.Chrome()
-    driver.get("https://books.google.com/")
-    elem = driver.find_element(By.ID, "oc-search-input")  # We select the schearch bar
-    print(driver.title)
-    elem.clear()
-    elem.send_keys(name)
-    elem.send_keys(Keys.RETURN)
-    time.sleep(5)
-    popup = driver.find_element(By.XPATH,
-                                "/html/body/c-wiz/div/div/div/div[2]/div[1]/div[3]/div[1]/div[1]/form[2]/div/div/button")
-    popup.click()
-    time.sleep(2)
-    driver.close()
+# Process to do -> 1. Se connecter a la base de donnée client
+#              -> Selectionner le client spécifier dans le parametre du script
+#                   ->Si pas de client alors renvoie "Le client n'existe pas dans la bdd"
+#                   ->Sinon si plusieurs client demandé lequel exactement.
+#                   -Ouvrir une page web de google maps
+#                   ->Accepter les cookiess
+#                   -> Et ecrire l'adresse du client en question
+#                   Done
+
+# def get_cookie():
+#     driver = webdriver.Chrome()
+#     driver.get("https://books.google.com/")
+#     time.sleep(1)
+#     pickle.dump(driver.get_cookies(), open("pickle.pkl", "wb"))
+#     driver.close()
 
 
-def get_cookie():
-    driver = webdriver.Chrome()
-    driver.get("https://books.google.com/")
+def find_to_db(db_user, db_password, client_name, db_name="test"):
+    try:
+        cnx = mc.connect(user=db_user,
+                         password=db_password,
+                         host='127.0.0.1',
+                         database=db_name)
+        cursor = cnx.cursor()
 
-    pickle.dump(driver.get_cookies(), open("pickle.pkl", "wb"))
-    driver.close()
+        fields = "NCLI, NOM, ADRESSE, LOCALITE"
+        table = "client"
+        conditions = "NOM = %s"
+        query = (f"SELECT {fields} "
+                 f"FROM {table} "
+                 f"WHERE {conditions};")
 
+        cursor.execute(query, client_name)
 
-def go_look_for_book(name):
-    # chrome_options = Options()
-    # chrome_options.add_argument("--user-data-dir=chrome-data")
-    # driver = webdriver.Chrome(options=chrome_options)
-    driver = webdriver.Chrome()
-    driver.get("https://books.google.com/")
-    assert "Google" in driver.title
-    # cookies = pickle.load(open("pickle.pkl", "rb"))
-    # for cookie in cookies:                             If u got some problems with the cookies uncomment here and run get cookies before the main
-    #    driver.add_cookie(cookie)
-    elem = driver.find_element(By.ID, "oc-search-input")  # We select the search bar
-    print(driver.title)
-    elem.clear()
-    elem.send_keys(name)
-    elem.send_keys(Keys.RETURN)  # On cherche le livre en question
-
-    time.sleep(2)  # Laisse le temps a la page de charger
-    # Clique sur accepter quand la popup viens
-    popup = driver.find_element(By.XPATH,
-                                "/html/body/c-wiz/div/div/div/div[2]/div[1]/div[3]/div[1]/div[1]/form[2]/div/div/button")
-    popup.click()
-    time.sleep(2)
-
-    # We verified that there is some result in the page otherwise we send an error
-    assert "No results found." not in driver.page_source
-    # Closing the session
-    driver.close()
+        myresult = cursor.fetchall()
+        cnx.close()
+        return myresult
+    except mc.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password please "
+                  "look for the right credentials")
+            exit(2)
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+            exit(2)
+        else:
+            print(err)
+            exit(2)
 
 
 if __name__ == '__main__':
-    # get_cookie()  # Chopper les cookies
-    # time.sleep(3)
-    # go_look_for_book("Le parfum")
-    test_books("le parfum")
-    # If there is some results so we store it in variable and will display it on the cli below
+    parser = argparse.ArgumentParser(
+        description="Look for a client in the database and open a browser with "
+                    "google maps and show his position base on his address",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-c", "--client", help="Name of the client")
+    parser.add_argument("-p", "--password", help="Password for access of the database")
+    parser.add_argument("-u", "--user", help="Username for access of the database")
+    parser.add_argument("-dbn", "--dbname", help="Name of the database you try to access , default is test",
+                        default="test")
+    args = parser.parse_args()
+
+    result = find_to_db(args.user, args.password, [args.client], args.dbname)
+
+    webdriver.Chrome
+    for x in result:
+        print(x)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
