@@ -1,9 +1,12 @@
+#! python3
+
 import mysql.connector as mc
 from mysql.connector import errorcode
 import argparse
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.common import exceptions
 import time
 
 
@@ -14,14 +17,10 @@ import time
 #                   -Ouvrir une page web de google maps
 #                   ->Accepter les cookiess
 #                   -> Et ecrire l'adresse du client en question
+#                   -> Faire l'itinéraire
+#                   -> Imprimer l'itinéraire
 #                   Done
 
-# def get_cookie():
-#     driver = webdriver.Chrome()
-#     driver.get("https://books.google.com/")
-#     time.sleep(1)
-#     pickle.dump(driver.get_cookies(), open("pickle.pkl", "wb"))
-#     driver.close()
 def get_adresse(client):
     address = str(client[2]) + ' ' + str(client[3])
     return address
@@ -29,38 +28,44 @@ def get_adresse(client):
 
 def get_googlemaps(client):
     driver = webdriver.Chrome()
-    driver.implicitly_wait(10)
-    driver.get("https://google.be/maps")
-    # Laisse le temps a la page de charger
-    # Clique sur accepter quand la popup viens
-    popup = driver.find_element(By.XPATH,
-                                "/html/body/c-wiz/div/div/div/div[2]/div[1]/div[3]/div[1]/div[1]/form[2]/div/div/button")
-    popup.click()
+    try:
+        driver.implicitly_wait(10)
+        driver.get("https://google.be/maps")
+        # Laisse le temps a la page de charger
+        # Clique sur accepter quand la popup viens
+        popup = driver.find_element(By.XPATH,
+                                    "/html/body/c-wiz/div/div/div/div[2]/div[1]/div[3]/div[1]/div[1]/form[2]"
+                                    "/div/div/button")
+        popup.click()
 
-    # Attends que ça charge
-    time.sleep(2)
-    # Cherche la barre de recherche
-    search_bar = driver.find_element(By.ID, "searchboxinput")
-    # Adresse
-    search_bar.send_keys(get_adresse(client))
-    search_bar.send_keys(Keys.RETURN)
-    # Fais l'itinéraire avec l'Ephec
-    itin = driver.find_element(By.XPATH,
-                               "//*[@id=\"QA0Szd\"]/div/div/div[1]/div[2]/div/div[1]/div/div/div[4]/div[1]/button")
-    itin.click()
-    time.sleep(2)
-    search_bar_iti = driver.find_element(By.XPATH, "//*[@id=\"sb_ifc51\"]/input")
-    search_bar_iti.send_keys("Ephec LLN")
-    driver.find_element(By.XPATH, "//*[@id=\"directions-searchbox-0\"]/button[1]").click()
-    time.sleep(2)
-    # Prend le temps que ça mettrait pour arriver jusqu'au client depuis l'Ephec
-    temps = driver.find_element(By.XPATH, "//*[@id=\"section-directions-trip-0\"]/div[1]")
-    temps.click()
-    time.sleep(2)
-    plan = driver.find_element(By.XPATH,"//*[@id=\"QA0Szd\"]/div/div/div[1]/div[2]/div/div[1]/div/div/div[2]")
-    plan.screenshot(f"./itinéraire_to_{str(client[1])}.png")
-    # Ferme le naviguateur
-    driver.close()
+        # Attends que ça charge
+        time.sleep(2)
+        # Cherche la barre de recherche
+        search_bar = driver.find_element(By.ID, "searchboxinput")
+        # Adresse
+        search_bar.send_keys(get_adresse(client))
+        search_bar.send_keys(Keys.RETURN)
+        # Fais l'itinéraire avec l'Ephec
+        itin = driver.find_element(By.XPATH,
+                                   "//*[@id=\"QA0Szd\"]/div/div/div[1]/div[2]/div/div[1]/div/div/div[4]/div[1]/button")
+        itin.click()
+        time.sleep(2)
+        search_bar_iti = driver.find_element(By.XPATH, "//*[@id=\"sb_ifc51\"]/input")
+        search_bar_iti.send_keys("Ephec LLN")
+        driver.find_element(By.XPATH, "//*[@id=\"directions-searchbox-0\"]/button[1]").click()
+        time.sleep(2)
+        # Prend le temps que ça mettrait pour arriver jusqu'au client depuis l'Ephec
+        temps = driver.find_element(By.XPATH, "//*[@id=\"section-directions-trip-0\"]/div[1]")
+        temps.click()
+        time.sleep(4)
+        plan = driver.find_element(By.XPATH, "//*[@id=\"QA0Szd\"]/div/div/div[1]/div[2]/div/div[1]/div/div/div[2]")
+        plan.screenshot(f"./itinéraire_to_{str(client[1])}.png")
+    except exceptions as err:
+        print(err)
+        exit(2)
+    finally:
+        # Ferme le naviguateur
+        driver.close()
 
 
 def find_to_db(db_user, db_password, client_name, db_name="test"):
@@ -141,3 +146,4 @@ if __name__ == '__main__':
     client_unique = many_client(result)
     # now open a window with selenium and search for Google Maps
     get_googlemaps(client_unique)
+    print("You can find the itinirery in this folder")
