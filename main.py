@@ -59,32 +59,15 @@ def find_to_db(db_user, db_password, client_name, db_name="test"):
             exit(2)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description="Look for a client in the database and open a browser with "
-                    "google maps and show his position base on his address",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument("-c", "--client", help="Name of the client")
-    parser.add_argument("-p", "--password", help="Password for access of the database")
-    parser.add_argument("-u", "--user", help="Username for access of the database")
-    parser.add_argument("-dbn", "--dbname", help="Name of the database you try to access , default is test",
-                        default="test")
-    args = parser.parse_args()
-
-    result = find_to_db(args.user, args.password, [args.client], args.dbname)
-    # for x in result:
-    #    print(x)
-# Case of many clients with the same name, ask for the client number.
-    if len(result) > 1:
+def many_client(many):
+    if len(many) > 1:
         print("There is more than one client with that name \n, please provide your unique client number\n")
-
         client = ()
         ok = 0
         while ok < 1:
             ncli = input("What is your client number ?\n")
             for x in result:
-                if ncli.upper() == x[0].upper():
+                if ncli.upper() in x[0].upper():
                     client = x
                     ok = 1
             if not ok:
@@ -99,5 +82,26 @@ if __name__ == '__main__':
     else:
         client = result[0]
 
-    print(client)
+    return client
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="Look for a client in the database and open a browser with "
+                    "google maps and show his position base on his address",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    requiredNamed = parser.add_argument_group('required named arguments')
+    parser.add_argument("-c", "--client", help="Name of the client")
+    requiredNamed.add_argument("-p", "--password", help="Password for access of the database", required=True)
+    requiredNamed.add_argument("-u", "--user", help="Username for access of the database", required=True)
+    parser.add_argument("-dbn", "--dbname", help="Name of the database you try to access , default is test",
+                        default="test")
+    args = parser.parse_args(['-h'])
+
+    result = find_to_db(args.user, args.password, [args.client], args.dbname)
+    # for x in result:
+    #    print(x)
+    # Case of many clients with the same name, ask for the client number.
+    client_unique = many_client(result)
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
