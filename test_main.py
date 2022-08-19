@@ -16,11 +16,11 @@ class Test(TestCase):
         self.assertEqual(1, resultat)
 
     def test_find_to_db(self):
-        client_many = [("C123", "MERCIER", "25, r.Lemaitre", "Namur"),
-                       ("D063", "MERCIER", "201,bvd du Nord", "Toulouse")]
-        resultat_many = find_to_db("root", "Bdcamp2642.", "MERCIER", "test")
+        client_many = [("C123", "MERCIER", "25, r. Lemaitre", "Namur"),
+                       ("D063", "MERCIER", "201, bvd du Nord", "Toulouse")]
+        resultat_many = find_to_db("root", "Bdcamp2642.", ["MERCIER"], "test")
         client = [("F400", "JACOB", "78, ch. du Moulin", "Bruxelles")]
-        resultat = find_to_db("root", "Bdcamp2642.", "JACOB", "test")
+        resultat = find_to_db("root", "Bdcamp2642.", ["JACOB"], "test")
         self.assertEqual(client, resultat)
         self.assertEqual(client_many, resultat_many)
 
@@ -29,3 +29,7 @@ class Test(TestCase):
                   ("C222", "MEUNIER", "Grand Rue", "Liege")]
         resultat = many_client(client)
         self.assertEqual(("C123", "MEUNIER", "Rue de la marquise", "Namur"), resultat)
+
+
+if __name__ == '__main__':
+    unittest.main()
